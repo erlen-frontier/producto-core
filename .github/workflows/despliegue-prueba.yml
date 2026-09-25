@@ -1,0 +1,19 @@
+# Deployment gate test: no secrets, no real deployment.
+# Expected: a run from main waits for approval of the "produccion" environment;
+# a run from any other branch is rejected by the environment's branch policy.
+name: despliegue-prueba
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  produccion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: produccion
+    steps:
+      - name: No-op
+        run: echo "Deployment gate test for ${GITHUB_REF} at ${GITHUB_SHA}. Nothing is deployed."

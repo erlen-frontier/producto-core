@@ -1,0 +1,26 @@
+# Developer Certificate of Origin: every non-merge commit of the pull request
+# needs a Signed-off-by matching its author. Pure bash + git; no secrets.
+name: dco
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  dco:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # actions/checkout v4.4.0, pinned to a full commit SHA (enterprise policy).
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Every commit is signed off
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/dco-check.sh "$BASE_SHA" "$HEAD_SHA"

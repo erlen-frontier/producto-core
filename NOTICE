@@ -1,0 +1,32 @@
+producto-core
+Copyright (C) 2026 producto-core contributors (see the git history)
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, version 3 only (SPDX: AGPL-3.0-only).
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero
+General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program (file LICENSE). If not, see
+<https://www.gnu.org/licenses/>.
+
+If you run a modified version of this program as a network service, AGPL
+section 13 requires you to offer its Corresponding Source to its users.
+See README.md ("Network use and Corresponding Source").
+
+Trademarks: the license does not grant rights to the project's or the
+managed service's names or logos. See docs/licensing.md#trademarks.
+
+Third-party components
+----------------------
+Vendored third-party code lives under third_party/ with its original
+license. Each component is listed here as:
+  <name> <version> - <source URL> - <SPDX license identifier>
+
+(none)
+
+Package dependencies are listed in the SBOM attached to each release.

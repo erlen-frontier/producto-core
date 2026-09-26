@@ -1,5 +1,13 @@
 # Producto Core: instrucciones para agentes
 
+## Reglas propias de este repositorio (público, AGPL-3.0-only)
+
+- **Nunca añadas `Signed-off-by`.** El DCO es una certificación que solo hace una persona; Jorge (u otro humano) firma tras revisar (`git rebase --signoff`). El check `dco` fallará en tus PR hasta entonces: es lo esperado, no lo «arregles» firmando tú.
+- Cabeceras SPDX en todo archivo de código nuevo (`SPDX-FileCopyrightText` + `SPDX-License-Identifier: AGPL-3.0-only`). No toques `LICENSE`.
+- Repositorio público: nada de datos de la empresa, clientes, rutas locales ni referencias a repos privados.
+- Antes del PR: `python3 scripts/check_compliance.py` y `python3 -m unittest discover -s tests -v`.
+- El flujo de release (`release.yml`) no se ejecuta ni se modifica sin petición explícita; nunca publiques releases ni etiquetas.
+
 <!-- erlen-convencion-agentes:inicio v2 (bloque común; fuente: erlen-suite/docs/convencion.md; se actualiza en todos los repos a la vez) -->
 ## Trabajo con varios agentes
 

@@ -1,0 +1,81 @@
+# DRAFT release flow (see docs/releasing.md). Never runs on pull requests.
+# Triggered only by pushing a v* tag. No deployment secrets. It builds a
+# reproducible source archive, exports the SBOM from GitHub's dependency
+# graph and attests build provenance. It does NOT publish a GitHub Release or
+# packages: a human does that after approving the attest job.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build source archive and SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      # actions/checkout v4.4.0, pinned to a full commit SHA (enterprise policy).
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: License, SPDX headers and required files
+        run: python3 scripts/check_compliance.py
+      - name: Tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Reproducible source archive (built twice, must match)
+        run: |
+          scripts/source-archive.sh "$GITHUB_SHA" dist "$GITHUB_REF_NAME"
+          scripts/source-archive.sh "$GITHUB_SHA" "$RUNNER_TEMP/again" "$GITHUB_REF_NAME"
+          cmp "dist/producto-core-$GITHUB_REF_NAME.tar.gz" "$RUNNER_TEMP/again/producto-core-$GITHUB_REF_NAME.tar.gz"
+      - name: SBOM from the GitHub dependency graph (SPDX 2.3)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/dependency-graph/sbom" --jq '.sbom' > "dist/producto-core-$GITHUB_REF_NAME.spdx.json"
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d["spdxVersion"].startswith("SPDX-"), d' "dist/producto-core-$GITHUB_REF_NAME.spdx.json"
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum -- * > SHA256SUMS && cat SHA256SUMS
+      # actions/upload-artifact v4.6.2, pinned to a full commit SHA.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: release-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 90
+
+  attest:
+    name: attest build provenance
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Human approval gate: records who authorized the release. The environment
+    # holds no secrets and only accepts main and v* tags.
+    environment: produccion
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      # actions/download-artifact v4.3.0, pinned to a full commit SHA.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: release-dist
+          path: dist
+      # actions/attest-build-provenance v4.2.2, pinned to a full commit SHA.
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/*.spdx.json
+            dist/SOURCE.json
+            dist/SHA256SUMS

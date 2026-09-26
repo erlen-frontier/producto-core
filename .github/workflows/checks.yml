@@ -1,0 +1,30 @@
+# Test flow for contributions: runs on pull requests (including forks) and on
+# main, with read-only permissions and no secrets. Separate from release.yml.
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # actions/checkout v4.4.0, pinned to a full commit SHA (enterprise policy).
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: License, SPDX headers and required files
+        run: python3 scripts/check_compliance.py
+      - name: Tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Source archive is reproducible
+        run: |
+          scripts/source-archive.sh HEAD "$RUNNER_TEMP/a" ci
+          scripts/source-archive.sh HEAD "$RUNNER_TEMP/b" ci
+          cmp "$RUNNER_TEMP/a/producto-core-ci.tar.gz" "$RUNNER_TEMP/b/producto-core-ci.tar.gz"
